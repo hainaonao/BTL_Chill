@@ -1,7 +1,6 @@
 .model large                                   
 .stack 100h                                                                  
 .data
-
 same_p1 db 0d ;If the same player1 is playing and it's not a new one
 same_p2 db 0d ;If the same player2 is playing and it's not a new one
 player_pos dw 1760d                         ;position of player
@@ -9,13 +8,9 @@ arrow_pos dw 0d                             ;position of arrow
 arrow_status db 0d                          ;0 = arrow ready to go else not 
 arrow_limit dw  22d                         ;150d
 loon_pos dw 3860d              
-direction db 0d                             ;direction of player 
-                                            ;up=8, down=2
 high_score dw ' ',0ah,0dh,                  ;Highscore variables
 dw ' ',0ah,0dh, 
-dw '                                  High Scores: ',0ah,0dh,  ; 0ah,0dh,: to make a new line and make the cursor starts from the first of the line
-                                                               ;so it's for moveing to next output line return to the beginning of the current line 
-                                                               ;without advancing downward. 
+dw '                                  High Scores: ',0ah,0dh,   
 dw ' ',0ah,0dh,
 dw ' ',0ah,0dh,
 dw  '                            Name:      |      Score: $'       ,0ah,0dh,    
@@ -26,8 +21,11 @@ miss dw 0d
 highScore dw 0d
 new_highScore1 dw 0d
 new_highScore2 dw 0d
-newn_highScore1 dw 0d
-newn_highScore2 dw 0d
+newn_highscore1 dw 0d
+newn_highscore2 dw 0d
+arr1 dw 2 dup(?)                       ;for storing player 1's name as 2 chars and ? means you can store any random value
+arr2 dw 2 dup(?)                       ;for storing player 2's name as 2 chars and ? means you can store any random value
+player db 0d                           ;to see if it's the first time to play or not
 game_over_str dw '  ',0ah,0dh 
 dw ' ',0ah,0dh 
 dw    '          --------------------------------------------------------      ',0ah,0dh
@@ -42,8 +40,7 @@ dw ' ',0ah,0dh
 dw '                        For 1st player press ( 1 ) ',0ah,0dh
 dw '                        For 2nd player press ( 2 ) ',0ah,0dh
 dw '                     For retry wit current player press ( enter ) $',0ah,0dh  
-
-  start_message dw '                                                                     ',0AH,0DH,
+start_message dw '                                                                     ',0AH,0DH,
    dw '                                                                     ',0AH,0DH,
    dw '                                                                     ',0AH,0DH,
    dw '                                                                     ',0AH,0DH,
@@ -63,58 +60,33 @@ dw '                     For retry wit current player press ( enter ) $',0ah,0dh
    dw '              *          >>>>Press Enter to start<<<<             *',0ah,0dh,
    dw '              *                                                   *',0AH,0DH,
    dw '              *                                                   *',0AH,0DH,
-   dw '              *****************************************************',0AH,0DH,'$'   ;the dollar indicating the end of the message  
-
-
-
-msg         db 0ah, 0dh, " UserName: $"  ;10 is the ASCII control code for line feed while 13 is the code for carriage return. 
-                                       ;The line feed control code moves the cursor to the next line, 
-                                       ;while the carriage return code moves the cursor to the start of line. 
-                                       ;Together the two control codes move the cursor to the start of the next line.
-                                         
-arr1 dw 2 dup(?)                       ;for storing player 1's name as 2 chars and ? means you can store any random value
-arr2 dw 2 dup(?)                       ;for storing player 2's name as 2 chars and ? means you can store any random value
-player db 0d                           ;to see if it's the first time to play or not
+   dw '              *****************************************************',0AH,0DH,'$'   
+msg         db 0ah, 0dh, " UserName: $" 
 
 .code
 main proc  
-                                                                                           
     MOV AX,@DATA                                                                                                                                           
     MOV DS,AX                                                                         
-    mov ax, 0B800h                                                                    ; move 0B800h into ax
-                                                                                      ; 0B800h is the address of VGA card for text mode
+    mov ax, 0B800h                                                                    ; move 0B800h into ax 0B800h is the address of VGA card for text mode
     mov es,ax                                                                         ; move AX into es, so es hold the address of VGA card  
-                                                                                      ; VGA text buffer is used in VGA compatible text mode.
-                                                                                      ; Each character in screen is represented by two bytes or by 16 bits.
-                                                                                      ; ES: segment in the memory which is auxiliary data segment in the memory
-                                                                                      ; ES is the default destination for string operations 
    start:
-    
      lea dx,  start_message                                                            ; Load the effective address of the string in dx using LEA command
      MOV AH,09H                                                                        ; Print the message by calling the interrupt with 9H in AH
      INT 21H                                                                           ; the interrupt command
-            
      input:
-    
         mov ah,1                                                                      ; wait for input      
         int 21h
+        cmp al,13d                                                                    ; cmpare if the input equal to asci of enter for game starting
+        je continue
         cmp al,49d                                                                    ;For 1st player
         je display_name1
-        cmp al,13d                                                                    ; cmpare if the input equal to asci of enter for game starting
-                                                                                      ; and retry using current player
-        je continue
         cmp al,50d                                                                    ;For 2nd player
-        call clear_screen  
         je   display_name2
         cmp player,1
         je  game_over                                                                    
         jne start 
   continue:
-              
-        mov ah,0                                                                          ;clearing the screen to go to start the game
-        mov al,3                                                                          ;set display mode function (video mode)
-        int 10h                                                                           ;mode 2 = text 80 x 25 16 grey
-                                                                                      ;video service bios interrupt   
+     call clear_screen                                                                                  
      cmp  player, 0                                                                    ;first time to play
      je   display_name1
      cmp  player, 1
@@ -122,7 +94,6 @@ main proc
      jne  show_name2                                                                   ;New player
      
   main_loop:                                 
-                                           
         mov ah,01h                                                                    ;int 16 / ah=01 -> check for keystroke (Get the State of the keyboard buffer)                                                                       
         int 16h                               
         jne key_pressed                                                               ;jmp if zero flag == 0       
@@ -130,15 +101,10 @@ main proc
         jge game_over                                                                 ; if zf == 1 then close the program
         mov dx,arrow_pos   
         cmp dx, loon_pos                                                              ;checking collitions
-        je hit                                                                        ;inc hits if the position of arrow is equal to balloon position 
-        cmp direction,10d                                                             ;check if the direction variable change to 10d (up)
-        je player_up                                                                  ;update player position
-        cmp direction,4d                                                              ;check if the direction variable change to 4d (down)
-        je player_down
+        je hit                                                                        ;inc newn_highscore if the position of arrow is equal to balloon position 
         mov dx,arrow_limit                                                            ;hide arrow if arrow reach its limit 
         cmp arrow_pos, dx
         jge hide_arrow
-        
         cmp loon_pos, 0d                                                              ;check missed loon
         jle miss_loon
         jne render_loon                  
@@ -153,16 +119,6 @@ main proc
             
             je  p1shoot
             jne p2shoot
-            call show_score                                                           ;display score 
-            lea dx,state_buf
-            mov ah,09h
-            int 21h
-            
-            mov ah,2                                                                  ;new line
-            mov dl, 0dh                                                               
-            int 21h    
-            jmp fire_loon                                                             ;new loon pops up  
-
         render_loon:    
             mov cl, ' '                                                               ;hide old loon
             mov ch, 1111b
@@ -170,12 +126,8 @@ main proc
             mov bx,loon_pos 
             mov es:[bx], cx
             
-            
-            cmp hits, 2                                                                ;compare for speed levels
-            je loon_2x
-            cmp hits, 3
-            je loon_2x                                                                  ;double speed
-            jg loon_3x                                                                  ;triple speed
+            cmp hits, 3                                                                ;compare for speed levels
+            je loon_2x            
             
             sub loon_pos,160d                                                        ;and draw new one in new position
             
@@ -189,7 +141,7 @@ main proc
             je render_arrow
             jne inside_loop2
             
-        loon_2x: sub loon_pos,320d                                                         ;draw a faster new loon in new position if hits are grater or equal to 4 hits 
+        loon_2x: sub loon_pos,320d                                                         ;draw a faster new loon in new position if newn_highscore are grater or equal to 4 newn_highscore 
             
             mov cl, 15d
             mov ch, 0010b
@@ -200,18 +152,6 @@ main proc
             cmp arrow_status,1d                                                       ;check any arrow to rander
             je render_arrow
             jne inside_loop2      
-            
-         loon_3x: sub loon_pos,640d                                                         ;draw a faster new loon in new position if hits are grater or equal to 4 hits 
-            
-            mov cl, 15d
-            mov ch, 0010b
-        
-            mov bx,loon_pos 
-            mov es:[bx], cx
-            
-            cmp arrow_status,1d                                                       ;check any arrow to rander
-            je render_arrow
-            jne inside_loop2
             
         render_arrow:                                                   
 
@@ -246,8 +186,6 @@ main proc
         mov es:[bx], cx
         
         sub player_pos, 160d                                                          ;set new postion of player
-        mov direction, 0    
-    
         jmp main_loop           
         
     player_down: 
@@ -259,8 +197,6 @@ main proc
         mov es:[bx], cx
         
         add player_pos,160d                                                           
-        mov direction, 0
-        
         jmp main_loop
     
     key_pressed:
@@ -268,84 +204,24 @@ main proc
         mov ah,0
         int 16h
     
-        cmp ah,48h                                                                    ;go upKey if up button is pressed
-        je upKey
+        cmp ah,48h                                                                    
+        je player_up
         cmp ah, 50h
-        je downKey
+        je player_down
         
         cmp ah,39h                                                                    ;go spaceKey if up button is pressed
         je spaceKey
         
-         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-         cmp ah,4Bh                            ;go leftKey (this is for debuging)     miss++
-         je leftKey
-         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-         
-         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-         cmp ah,4Dh                            ;go rightKey (this is for debuging)    hit++
-         je rightKey
-         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-         
         jmp main_loop
-                              
-                              
-                              
-        
-    upKey:                                                                            ;set player direction to up
-        mov direction, 10d
-        jmp main_loop     
-        
-        
-    
-    downKey:
-        mov direction, 4d                                                             ;set player direction to down
-        jmp main_loop     
-        
-        
-        
+                                      
     spaceKey:                                                                         ;ban ten
         cmp arrow_status,0
         je  fire_arrow
         jmp main_loop
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                              
-     leftKey:                                  ;we use it for debuging 
-    ;jmp game_over
-    inc miss
-            
-    lea bx,state_buf
-    call show_score 
-    lea dx,state_buf
-    mov ah,09h
-    int 21h
-    
-    mov ah,2
-    mov dl, 0dh
-    int 21h
-jmp main_loop                             
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                              
-     rightKey:                                  ;we use it for debuging 
-    ;jmp game_over
-    
-    jmp hit
-            
-    lea bx,state_buf
-    call show_score 
-    lea dx,state_buf
-    mov ah,09h
-    int 21h
-    
-    mov ah,2
-    mov dl, 0dh
-    int 21h
-jmp main_loop                             
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                               
     fire_arrow:
                                                                            ;set arrow postion in player position
         mov dx, player_pos                                                            ;so arrow fire from player postion
         mov arrow_pos, dx
-        
-        mov dx,player_pos                                                             ;when fire an arrow it also set limit
         mov arrow_limit, dx                                                           ;of arrow. where it should be hide
         add arrow_limit, 22d  
         mov arrow_status, 1d 
@@ -407,7 +283,6 @@ jmp main_loop
         
         int 21h
         
-        
         mov ah,09h                                                                    ;enabling writing on the screen
         mov dx, offset game_over_str                                                  ;print game over screen 
         int 21h 
@@ -422,7 +297,6 @@ jmp main_loop
         mov arrow_status, 0d
         mov arrow_limit, 22d    
         mov loon_pos, 3860d       
-        mov direction, 0d
         jmp input                                                                     ;press Enter to play again
         
     update_highScore1:                                                             ;updating highscore during the game
@@ -472,7 +346,7 @@ jmp main_loop
        mov si, offset arr1                                                          ;for player1 name output && ( si ) is source index that point to arr1
        mov cx, 2                                                                    ;for looping to print the name from the array
          
-    loop2nd:
+    loop21nd:
     
        mov dl, [si]
        mov ah, 02h                                                                  ;for printing the first index then others 
@@ -484,7 +358,7 @@ jmp main_loop
        int 21h
        
        inc si
-       loop loop2nd                                                                 ;loop cx=2 times
+       loop loop21nd                                                                 ;loop cx=2 times
 
        mov ah, 2
        mov dl, 0ah                                           ;A=10 make the cursor move to the next line
@@ -505,14 +379,14 @@ jmp main_loop
        
     show_name2:
       
-      mov ax, @data                                                                     ;display name (put before the show score proc as it's not repeated and there is no need for a new line)
+       mov ax, @data                                                                     ;display name (put before the show score proc as it's not repeated and there is no need for a new line)
        mov ds, ax
        lea dx, msg
        mov ah, 09h                                                                       ;output
        int 21h
        
        mov si, offset arr2
-       mov cx, 3 
+       mov cx, 2 
          
     loop22nd:
     
@@ -547,9 +421,9 @@ jmp main_loop
         
    p1shoot:                                                                 ;player1 is currently playing and made a shoot successfully
    
-       inc newn_highScore1
+       inc newn_highscore1
        mov dx, new_highScore1
-       mov cx, newn_highScore1
+       mov cx, newn_highscore1
        cmp cx, dx
        jg update_new1 
                                                                             ;update score
@@ -577,9 +451,9 @@ jmp main_loop
        
    p2shoot:                                                                  ;player2 is currently playing and made a shoot successfully
       
-       inc newn_highScore2
+       inc newn_highscore2
        mov dx, new_highScore2
-       mov cx, newn_highScore2
+       mov cx, newn_highscore2
        cmp cx, dx
        jg update_new2                                                                   ;update score
             
@@ -693,16 +567,6 @@ proc show_score                                                 ;game board whil
 
 ret    
 show_score endp 
-
-
-clear_screen proc near
-    
-        mov ah,0                                                                     ;clearing the screen to go to start the game
-        mov al,3                                                                      ;set display mode function (video mode)
-        int 10h                                                                       ;mode 2 = text 80 x 25 16 grey                                                                                    ;video service bios interrupt        
-ret
-clear_screen endp 
-
 
 proc display_name1
     
@@ -825,7 +689,6 @@ proc display_name2
                                                            ;((Like defining the MSG in the code segment)) 
      int 21h    
    
-             
     call show_score                                                                   ;display score
     lea dx,state_buf
     mov ah,09h
@@ -841,6 +704,14 @@ ret
 display_name2 endp
 
 
+clear_screen proc near
+    
+        mov ah,0                                                                     ;clearing the screen to go to start the game
+        mov al,3                                                                      ;set display mode function (video mode)
+        int 10h                                                                       ;mode 2 = text 80 x 25 16 grey                                                                                    ;video service bios interrupt        
+ret
+clear_screen endp 
+
 proc score_list 
     
     lea bx,name_list
@@ -849,9 +720,8 @@ proc score_list
     mov ax, new_highScore2
     
     cmp cx, ax                                                                    
-    jg best_1                                                                          ;player1 is better than player2
-                                                                                       ;if not so continue as player2 is better.
-    
+    jg best_1                                                                          
+;best_2
     mov  dx, arr2
     add ax,48d
                                  
@@ -866,9 +736,6 @@ proc score_list
     mov [bx+137],  10d
     mov [bx+138], dx
     mov [bx+158], cx     
-    
-    
-
 ret
 score_list endp
 
@@ -880,8 +747,6 @@ proc best_1
     mov [bx],  10d
     mov [bx+57], dx     
     mov [bx+77], cx
-    
-    
     
     mov  dx, arr2
        
