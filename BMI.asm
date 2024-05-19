@@ -21,33 +21,32 @@ tb8 db 'Xin chuc mung ban..! Hay tiep tuc nhe! $'
 cn1 db 'Nhan phim 1 de tinh toan lai $'
 cn2 db 'Nhan phim 2 de THOAT $'
 tb9 db 'Cam on ban da tham gia $'
-tb10 db 'Nhan 1 phim bat ki de tiep tuc... $'  
-sum equ 0   
+tb10 db 'Nhan 1 phim bat ki de tiep tuc... $'    
 chieucao dw ?
 cannang dw ?
 .code                                                                       
 main proc 
     mov ax,@data
-    mov ds,ax
-     
-    ;Hien thi ra man hinh xau tb1
+    mov ds,ax 
+    
     lea dx,tb1
     mov ah,9
     int 21h
     
     call NL
-    call NL  
+    call NL
     
-    ;Hien thi ra man hinh xau tb2
     lea dx,tb2
     mov ah,9
     int 21h
+    
+    call NL
+    call NL
     
     Start:
     call NL
     call NL
     
-    ;Hien thi ra man hinh xau tb4
     lea dx,tb4
     mov ah,9
     int 21h
@@ -56,10 +55,11 @@ main proc
     mov bx,0
     mov cx,0
     mov dx,0
+    ;mov sum,0
     
-    ;Ham nhap chieu cao
     Input: 
     
+    and ax,000FH ;Giu lai 4 bit thap nhat cua ax
     push ax
     mov ax,10
     mul bx
@@ -77,18 +77,17 @@ main proc
     
     print:
     call nl
-    
-    ;Hien thi ra man hinh xau tb5
     lea dx,tb5
     mov ah,9
     int 21h
     
+    ;mov sum,bx
     mov chieucao,bx
     mov bx,0
     mov ax,0
     
-    ;Ham nhap can nang
     Input2:
+    and ax,000FH
     push ax
     mov ax,10
     mul bx
@@ -106,6 +105,7 @@ main proc
     
     convert:
     
+    ;mov ax,sum
     mov cannang,bx
     mov dx,0
     
@@ -123,6 +123,7 @@ main proc
     cmp ax,18
     jl under
     
+    
     cmp ax,25
     jl perfect
     
@@ -130,9 +131,8 @@ main proc
     
     over:
     call NL
-    call NL 
+    call NL
     
-    ;Hien thi ra man hinh xau kq1
     lea dx,kq1
     mov ah,9
     int 21h
@@ -142,24 +142,24 @@ main proc
     perfect:
     call NL 
     call NL
-    ;Hien thi ra man hinh xau kq2
+    
     lea dx,kq2
     mov ah,9
     int 21h
     
     call NL
     call NL
-    ;Hien thi ra man hinh xau tb8
+    
     lea dx,tb8
     mov ah,9
     int 21h
     
-    JMP Exit    
+    JMP Exit
     
     under:
     call NL
     call NL
-    ;Hien thi ra man hinh xau kq3
+    
     lea dx,kq3
     mov ah,9
     int 21h
@@ -170,14 +170,14 @@ main proc
     mov ax,0
     call NL
     call NL
-    ;Hien thi ra man hinh xau tb6
+    
     lea dx,tb6
     mov ah,9
     int 21h
     
     call NL
     call NL
-    ;Hien thi ra man hinh xau tb7
+    
     lea dx,tb7
     mov ah,9
     int 21h
@@ -194,25 +194,25 @@ main proc
     P1:
     call NL
     call NL
-    ;Hien thi ra man hinh xau uw1
+    
     lea dx,uw1
     mov ah,9
     int 21h
     
     call NL
-    ;Hien thi ra man hinh xau uw2
+    
     lea dx,uw2
     mov ah,9
     int 21h
     
     call NL
-    ;Hien thi ra man hinh xau uw3
+    
     lea dx,uw3
     mov ah,9
     int 21h
     
     call NL
-    ;Hien thi ra man hinh xau uw4
+    
     lea dx,uw4
     mov ah,9
     int 21h
@@ -222,19 +222,19 @@ main proc
     P2:
     call NL
     call NL
-    ;Hien thi ra man hinh xau ow1
+    
     lea dx,ow1
     mov ah,9
     int 21h
     
     call NL
-    ;Hien thi ra man hinh xau ow2
+    
     lea dx,ow2
     mov ah,9
     int 21h
     
     call NL
-    ;Hien thi ra man hinh xau ow3
+    
     lea dx,ow3
     mov ah,9
     int 21h
@@ -243,7 +243,7 @@ main proc
     mov ax,0
     call NL
     call NL
-    ;Hien thi ra man hinh xau tb10
+    
     lea dx,tb10
     mov ah,9
     int 21h
@@ -251,12 +251,12 @@ main proc
     mov ah,1
     int 21h
     call NL
-    ;Hien thi ra man hinh xau cn1
+    
     lea dx,cn1
     mov ah,9
     int 21h
     call NL
-    ;Hien thi ra man hinh xau cn2
+    
     lea dx,cn2
     mov ah,9
     int 21h 
@@ -269,10 +269,9 @@ main proc
     
     JMP Exit2
     
-    Exit2:             
+    Exit2:
     call NL 
-    call NL 
-    ;Hien thi ra man hinh xau tb9
+    call NL
     lea dx,tb9
     mov ah,9
                    
