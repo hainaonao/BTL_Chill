@@ -40,8 +40,7 @@ main proc
     mov ah,9
     int 21h
     
-    call NL
-    call NL
+    
     
     Start:
     call NL
@@ -55,7 +54,6 @@ main proc
     mov bx,0
     mov cx,0
     mov dx,0
-    ;mov sum,0
     
     Input: 
     
@@ -81,7 +79,6 @@ main proc
     mov ah,9
     int 21h
     
-    ;mov sum,bx
     mov chieucao,bx
     mov bx,0
     mov ax,0
@@ -105,7 +102,6 @@ main proc
     
     convert:
     
-    ;mov ax,sum
     mov cannang,bx
     mov dx,0
     
